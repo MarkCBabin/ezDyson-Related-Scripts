@@ -1,0 +1,46 @@
+from __future__ import division
+import sys
+import numpy as np
+import scipy as sp
+import math
+import csv
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+
+#####################################################
+
+filename = sys.argv[1]
+# allows user to specify on the command line what file they want to be read
+
+cols = pd.read_csv(filename,header=None, usecols=[0,1])
+eKE = cols[0]
+Xsec = cols[1]
+# reads the .csv file the user specifies and creates two variables
+# eKE is the first column (and should be the eKE)
+# Xsec is the second column (and should be the calculated cross section)
+ 
+eke = np.zeros((len(eKE),1))
+xsec = np.zeros((len(Xsec),1))
+
+for i in range(len(eKE)):
+	eke[i,0] = float(eKE[i])
+	xsec[i,0] = float(Xsec[i])
+# converting this data type to the proper format for curve_fit
+
+def fitt(x,A,B):
+	return A*x**0.5 + B*x**1.5
+# defines the type of function to fit
+# here, use a form of s + p wave and the Wigner threshold law
+
+popt, pcov = curve_fit(fitt, eke.ravel(), xsec.ravel(), bounds=(0, [1.,1.]))
+print popt
+# performs the curve fit and prints the fitting parameters to the user
+
+plt.plot(eke, xsec, 'ro',label = 'Calculated $\sigma$')
+plt.plot(eke,fitt(eke, *popt), label = 'Fit: A = %5.3f, B = %5.3f' % tuple(popt))
+plt.xlabel('eKE (eV)')
+plt.ylabel('$\sigma_{Total}$')
+plt.legend()
+plt.show()
+# plots both the data and the fit, as well as labels everything appropriately
